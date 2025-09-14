@@ -1,6 +1,8 @@
 console.log("Hello sabhi ko");
 const express = require('express');
 const path = require('path');
+const mongoose = require('mongoose')
+const User=require('./models/User')
 const app = new express();
 
 app.listen(3000, (req, res) => {
@@ -34,19 +36,38 @@ app.get('/', (req, res) => {
 //     res.send(req.query)
 // })
 
+//middleware
 app.set('view engine', 'ejs')
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.urlencoded({ extended: true }))
 
+//Connection with MongoDB
+
+mongoose.connect('mongodb://127.0.0.1:27017/Userdata',{
+    useNewUrlParser:true,
+    useUnifiedTopology:true
+}).then(()=>{console.log("MongoDB connected successfully...")})
+.catch(err=>console.log("MongoDB Not connected ",err))
+
+
+//routing
 app.get('/register', (req, res) => {
     res.render('register')
 })
 
-app.post('/register', (req,res) => {
-    const { uname, fname, lname, no} =req.body
-    console.log(`username is : ${uname}\n,first name is : ${fname}\n,last name is : ${lname}\n,mob no is : ${no}`);
+app.post('/register', async(req,res) => {
+    try{
+        const { uname, fname, lname, no} =req.body
+        const User1 =new User({uname,fname,lname,no})
+        console.log(User1);
 
-    res.send("form submitted.. Thank you");
-    
+        await User1.save();
+        res.send("data have been submitted in MongooDB.. Thank you");
+        res.redirect("/register")
+    }catch(err)
+    {
+        res.status(500).send(err);
+        console.log(err)
+    } 
 })
 
